@@ -11,12 +11,15 @@
  */
 package org.eclipse.che.plugin.languageserver.ide;
 
-import com.google.gwt.regexp.shared.RegExp;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.util.Set;
+import org.eclipse.che.api.languageserver.shared.model.LanguageRegex;
 import org.eclipse.che.ide.api.editor.EditorRegistry;
 import org.eclipse.che.ide.api.filetypes.FileType;
 import org.eclipse.che.ide.api.filetypes.FileTypeRegistry;
+import org.eclipse.che.ide.api.filetypes.FileTypeRegistry.Collision;
+import org.eclipse.che.ide.api.filetypes.FileTypeRegistry.Registration;
 import org.eclipse.che.plugin.languageserver.ide.editor.LanguageServerEditorProvider;
 import org.eclipse.che.plugin.languageserver.ide.registry.LanguageServerRegistry;
 import org.eclipse.che.plugin.languageserver.ide.service.LanguageServerServiceClient;
@@ -57,36 +60,38 @@ public class LanguageRegexesInitializer {
             languageRegexes -> {
               languageRegexes.forEach(
                   languageRegex -> {
-                    String namePattern = languageRegex.getNamePattern();
-
-                    FileType fileTypeCandidate = null;
-                    for (FileType fileType : fileTypeRegistry.getRegisteredFileTypes()) {
-                      String extension = fileType.getExtension();
-                      if (extension != null && RegExp.compile(namePattern).test('.' + extension)) {
-                        fileTypeCandidate = fileType;
-                      }
-
-                      String namePatternCandidate = fileType.getNamePattern();
-                      if ((namePattern.equals(namePatternCandidate)
-                          || RegExp.quote(namePattern).equals(namePatternCandidate))) {
-                        fileTypeCandidate = fileType;
-                      }
-                    }
-
-                    if (fileTypeCandidate == null) {
-                      fileTypeCandidate = new FileType(resources.file(), null, namePattern);
-                      fileTypeRegistry.registerFileType(fileTypeCandidate);
-                    } else {
-                      fileTypeCandidate.setNamePattern(namePattern);
-                    }
-
-                    lsRegistry.registerFileType(fileTypeCandidate, languageRegex);
-                    editorRegistry.registerDefaultEditor(fileTypeCandidate, editorProvider);
+                    FileType fileTypeCandidate =
+                        new FileType(resources.file(), null, languageRegex.getNamePattern());
+                    registerFileType(fileTypeCandidate, languageRegex);
                   });
             })
         .catchError(
             promiseError -> {
               LOGGER.error("Error", promiseError.getCause());
             });
+  }
+
+  private void registerFileType(FileType fileTypeCandidate, LanguageRegex languageRegex) {
+    Registration registration = fileTypeRegistry.register(fileTypeCandidate);
+    if (registration.isSuccessfully()) {
+      lsRegistry.registerFileType(fileTypeCandidate, languageRegex);
+      editorRegistry.registerDefaultEditor(fileTypeCandidate, editorProvider);
+      return;
+    }
+
+    Collision collision = registration.getCollision();
+    if (collision.hasConflicts()) {
+      LOGGER.error("Can not register file type with extension " + fileTypeCandidate.getExtension());
+      return;
+    }
+
+    if (collision.hasMerges()) {
+      Set<FileType> mergedTypes = collision.merge();
+      mergedTypes.forEach(
+          fileType -> {
+            lsRegistry.registerFileType(fileTypeCandidate, languageRegex);
+            editorRegistry.registerDefaultEditor(fileTypeCandidate, editorProvider);
+          });
+    }
   }
 }

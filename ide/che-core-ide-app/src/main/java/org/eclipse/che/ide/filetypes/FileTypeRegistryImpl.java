@@ -11,15 +11,18 @@
  */
 package org.eclipse.che.ide.filetypes;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.eclipse.che.ide.util.NameUtils.getFileExtension;
 
-import com.google.common.base.Strings;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.eclipse.che.ide.api.filetypes.FileType;
 import org.eclipse.che.ide.api.filetypes.FileTypeRegistry;
 import org.eclipse.che.ide.api.resources.VirtualFile;
@@ -32,17 +35,44 @@ import org.eclipse.che.ide.api.resources.VirtualFile;
 @Singleton
 public class FileTypeRegistryImpl implements FileTypeRegistry {
   private final FileType unknownFileType;
-  private final List<FileType> fileTypes;
+  private final FileTypeCollisionChecker collisionChecker;
+  private final Set<FileType> fileTypes = new HashSet<>();
 
   @Inject
-  public FileTypeRegistryImpl(@Named("defaultFileType") FileType unknownFileType) {
+  public FileTypeRegistryImpl(
+      @Named("defaultFileType") FileType unknownFileType,
+      FileTypeCollisionChecker collisionChecker) {
     this.unknownFileType = unknownFileType;
-    fileTypes = new ArrayList<>();
+    this.collisionChecker = collisionChecker;
   }
 
   @Override
-  public void registerFileType(FileType fileType) {
-    fileTypes.add(fileType);
+  public Registration register(FileType candidate) {
+    Collision collision = collisionChecker.check(candidate, getFileTypes());
+    if (collision != null) {
+      return new FileTypeRegistration(collision);
+    }
+
+    fileTypes.add(candidate);
+    return new FileTypeRegistration();
+  }
+
+  @Override
+  public void registerFileType(FileType candidate) {
+    Registration registration = register(candidate);
+    if (registration.isSuccessfully()) {
+      return;
+    }
+
+    Collision collision = registration.getCollision();
+    if (collision.hasConflicts()) {
+      throw new IllegalStateException(
+          "Can not register file type with extension " + candidate.getExtension());
+    }
+
+    if (collision.hasMerges()) {
+      collision.merge();
+    }
   }
 
   @Override
@@ -51,40 +81,52 @@ public class FileTypeRegistryImpl implements FileTypeRegistry {
   }
 
   @Override
+  public Set<FileType> getFileTypes() {
+    return new HashSet<>(fileTypes);
+  }
+
+  @Override
   public FileType getFileTypeByFile(VirtualFile file) {
-    FileType fileType = getFileTypeByFileName(file.getName());
+    String fileName = file.getName();
+    String fileExtension = getFileExtension(fileName);
+
+    FileType fileType = getFileTypeByExtension(fileExtension);
     if (fileType == unknownFileType) {
-      fileType = getFileTypeByExtension(getFileExtension(file.getName()));
+      fileType = getFileTypeByFileName(fileName);
     }
     return fileType != null ? fileType : unknownFileType;
   }
 
   @Override
   public FileType getFileTypeByExtension(String extension) {
-    if (!Strings.isNullOrEmpty(extension)) {
-      for (FileType type : fileTypes) {
-        if (type.getExtension() != null && type.getExtension().equals(extension)) {
-          return type;
-        }
-      }
+    if (isNullOrEmpty(extension)) {
+      return unknownFileType;
     }
 
-    return unknownFileType;
+    Optional<FileType> fileType =
+        fileTypes.stream().filter(type -> extension.equals(type.getExtension())).findFirst();
+    return fileType.orElse(unknownFileType);
   }
 
   @Override
   public FileType getFileTypeByFileName(String name) {
-    if (!Strings.isNullOrEmpty(name)) {
-      for (FileType type : fileTypes) {
-        if (type.getNamePattern() != null) {
-          RegExp regExp = RegExp.compile(type.getNamePattern());
-          if (regExp.test(name)) {
-            return type;
-          }
-        }
-      }
+    if (isNullOrEmpty(name)) {
+      return unknownFileType;
     }
 
-    return unknownFileType;
+    Optional<FileType> fileType =
+        fileTypes.stream().filter(type -> isFileNameMatchType(name, type)).findFirst();
+    return fileType.orElse(unknownFileType);
+  }
+
+  private boolean isFileNameMatchType(String nameToTest, FileType fileType) {
+    return fileType
+        .getNamePatterns()
+        .stream()
+        .anyMatch(
+            namePattern -> {
+              RegExp regExp = RegExp.compile(namePattern);
+              return regExp.test(nameToTest);
+            });
   }
 }
