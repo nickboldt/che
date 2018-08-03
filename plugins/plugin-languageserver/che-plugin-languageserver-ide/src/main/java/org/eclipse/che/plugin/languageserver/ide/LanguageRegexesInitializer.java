@@ -73,25 +73,22 @@ public class LanguageRegexesInitializer {
 
   private void registerFileType(FileType fileTypeCandidate, LanguageRegex languageRegex) {
     Registration registration = fileTypeRegistry.register(fileTypeCandidate);
-    if (registration.isSuccessfully()) {
+    if (registration.isSuccessful()) {
       lsRegistry.registerFileType(fileTypeCandidate, languageRegex);
       editorRegistry.registerDefaultEditor(fileTypeCandidate, editorProvider);
       return;
     }
 
     Collision collision = registration.getCollision();
-    if (collision.hasConflicts()) {
-      LOGGER.error("Can not register file type with extension " + fileTypeCandidate.getExtension());
-      return;
-    }
-
-    if (collision.hasMerges()) {
+    if (collision.canBeSafelyMerged()) {
       Set<FileType> mergedTypes = collision.merge();
       mergedTypes.forEach(
           fileType -> {
             lsRegistry.registerFileType(fileTypeCandidate, languageRegex);
             editorRegistry.registerDefaultEditor(fileTypeCandidate, editorProvider);
           });
+    } else {
+      LOGGER.error("Can not register file type with extension " + fileTypeCandidate.getExtension());
     }
   }
 }

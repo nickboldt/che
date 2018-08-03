@@ -26,14 +26,14 @@ import org.eclipse.che.ide.api.filetypes.FileTypeRegistry.Collision;
 public class FileTypeCollision implements Collision {
 
   private FileType candidate;
-  private Set<FileType> conflictTypes;
-  private Set<FileType> mergeTypes;
+  private Set<FileType> unmergeableTypes;
+  private Set<FileType> mergeableTypes;
 
   public FileTypeCollision(
-      FileType candidate, Set<FileType> conflictTypes, Set<FileType> mergeTypes) {
+      FileType candidate, Set<FileType> unmergeableTypes, Set<FileType> mergeableTypes) {
     this.candidate = candidate;
-    this.conflictTypes = conflictTypes;
-    this.mergeTypes = mergeTypes;
+    this.unmergeableTypes = unmergeableTypes;
+    this.mergeableTypes = mergeableTypes;
   }
 
   @Override
@@ -42,13 +42,13 @@ public class FileTypeCollision implements Collision {
   }
 
   @Override
-  public boolean hasMerges() {
-    return !getMergeTypes().isEmpty();
+  public boolean canBeSafelyMerged() {
+    return getUnmergeableTypes().isEmpty() && !getMergeableTypes().isEmpty();
   }
 
   @Override
   public Set<FileType> merge() {
-    Set<FileType> typesToMerge = getMergeTypes();
+    Set<FileType> typesToMerge = getMergeableTypes();
     if (candidate == null || typesToMerge.isEmpty()) {
       return emptySet();
     }
@@ -58,17 +58,12 @@ public class FileTypeCollision implements Collision {
   }
 
   @Override
-  public Set<FileType> getMergeTypes() {
-    return mergeTypes == null ? emptySet() : new HashSet<>(mergeTypes);
+  public Set<FileType> getMergeableTypes() {
+    return mergeableTypes == null ? emptySet() : new HashSet<>(mergeableTypes);
   }
 
   @Override
-  public boolean hasConflicts() {
-    return !getConflictTypes().isEmpty();
-  }
-
-  @Override
-  public Set<FileType> getConflictTypes() {
-    return conflictTypes == null ? emptySet() : new HashSet<>(conflictTypes);
+  public Set<FileType> getUnmergeableTypes() {
+    return unmergeableTypes == null ? emptySet() : new HashSet<>(unmergeableTypes);
   }
 }

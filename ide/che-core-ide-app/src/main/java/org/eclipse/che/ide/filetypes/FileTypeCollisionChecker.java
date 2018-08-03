@@ -38,23 +38,23 @@ public class FileTypeCollisionChecker {
       return null;
     }
 
-    Set<FileType> mergeTypes = new HashSet<>();
-    Set<FileType> conflictTypes = new HashSet<>();
+    Set<FileType> mergeableTypes = new HashSet<>();
+    Set<FileType> unMergeableTypes = new HashSet<>();
 
     for (FileType fileType : fileTypes) {
       if (hasExtensionConflict(fileType, candidate)) {
-        conflictTypes.add(fileType);
+        unMergeableTypes.add(fileType);
         continue;
       }
 
       if (canBeMerged(fileType, candidate)) {
-        mergeTypes.add(fileType);
+        mergeableTypes.add(fileType);
       }
     }
 
-    return mergeTypes.isEmpty() && conflictTypes.isEmpty()
+    return mergeableTypes.isEmpty() && unMergeableTypes.isEmpty()
         ? null
-        : new FileTypeCollision(candidate, conflictTypes, mergeTypes);
+        : new FileTypeCollision(candidate, unMergeableTypes, mergeableTypes);
   }
 
   private boolean hasExtensionConflict(FileType fileType, FileType candidate) {

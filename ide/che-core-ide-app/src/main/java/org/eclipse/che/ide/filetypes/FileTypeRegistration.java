@@ -21,7 +21,7 @@ import org.eclipse.che.ide.api.filetypes.FileTypeRegistry.Registration;
  */
 public class FileTypeRegistration implements Registration {
 
-  private boolean isSuccessfully;
+  private boolean isSuccessful;
   private Collision collision;
 
   public FileTypeRegistration() {
@@ -32,14 +32,14 @@ public class FileTypeRegistration implements Registration {
     this(false, collision);
   }
 
-  public FileTypeRegistration(boolean isSuccessfully, Collision collision) {
-    this.isSuccessfully = isSuccessfully;
+  public FileTypeRegistration(boolean isSuccessful, Collision collision) {
+    this.isSuccessful = isSuccessful;
     setCollision(collision);
   }
 
   @Override
-  public boolean isSuccessfully() {
-    return isSuccessfully;
+  public boolean isSuccessful() {
+    return isSuccessful;
   }
 
   @Override

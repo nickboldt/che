@@ -60,19 +60,18 @@ public class FileTypeRegistryImpl implements FileTypeRegistry {
   @Override
   public void registerFileType(FileType candidate) {
     Registration registration = register(candidate);
-    if (registration.isSuccessfully()) {
+    if (registration.isSuccessful()) {
       return;
     }
 
     Collision collision = registration.getCollision();
-    if (collision.hasConflicts()) {
-      throw new IllegalStateException(
-          "Can not register file type with extension " + candidate.getExtension());
+    if (collision.canBeSafelyMerged()) {
+      collision.merge();
+      return;
     }
 
-    if (collision.hasMerges()) {
-      collision.merge();
-    }
+    throw new IllegalStateException(
+        "Can not register file type with extension " + candidate.getExtension());
   }
 
   @Override
@@ -115,11 +114,11 @@ public class FileTypeRegistryImpl implements FileTypeRegistry {
     }
 
     Optional<FileType> fileType =
-        fileTypes.stream().filter(type -> isFileNameMatchType(name, type)).findFirst();
+        fileTypes.stream().filter(type -> doesFileNameMatchType(name, type)).findFirst();
     return fileType.orElse(unknownFileType);
   }
 
-  private boolean isFileNameMatchType(String nameToTest, FileType fileType) {
+  private boolean doesFileNameMatchType(String nameToTest, FileType fileType) {
     return fileType
         .getNamePatterns()
         .stream()
