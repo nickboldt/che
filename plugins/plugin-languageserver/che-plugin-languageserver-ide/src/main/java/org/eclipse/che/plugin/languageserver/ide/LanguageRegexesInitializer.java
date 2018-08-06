@@ -84,8 +84,8 @@ public class LanguageRegexesInitializer {
       Set<FileType> mergedTypes = collision.merge();
       mergedTypes.forEach(
           fileType -> {
-            lsRegistry.registerFileType(fileTypeCandidate, languageRegex);
-            editorRegistry.registerDefaultEditor(fileTypeCandidate, editorProvider);
+            lsRegistry.registerFileType(fileType, languageRegex);
+            editorRegistry.registerDefaultEditor(fileType, editorProvider);
           });
     } else {
       LOGGER.error("Can not register file type with extension " + fileTypeCandidate.getExtension());
