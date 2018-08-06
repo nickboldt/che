@@ -64,6 +64,7 @@ import org.eclipse.che.api.fs.server.FsDtoConverter;
 import org.eclipse.che.api.fs.server.FsManager;
 import org.eclipse.che.api.project.server.ProjectManager;
 import org.eclipse.che.api.project.server.ProjectService;
+import org.eclipse.che.api.project.server.notification.PreProjectDeletedEvent;
 import org.eclipse.che.api.project.server.notification.ProjectCreatedEvent;
 import org.eclipse.che.api.project.server.notification.ProjectDeletedEvent;
 import org.eclipse.che.api.project.server.notification.ProjectItemModifiedEvent;
@@ -236,6 +237,8 @@ public class ProjectServiceApi {
     wsPath = absolutize(wsPath);
 
     if (projectManager.isRegistered(wsPath)) {
+      eventService.publish(new PreProjectDeletedEvent(wsPath));
+
       projectManager
           .delete(wsPath)
           .map(RegisteredProject::getPath)
