@@ -42,7 +42,7 @@ pushd dashboard
   # apply patch to move from bower to yarn
   # https://github.com/nickboldt/che/tree/10881
   # path relative to root since we run this script as ./product/build-ncl.sh
-  patch -p 2 -F 2 < ../product/10881-replace-bower-with-yarn.patch
+  patch -p 2 -F 2 --ignore-whitespace < ../product/10881-replace-bower-with-yarn.patch
 popd
 
 mvn clean deploy -T 16 -V -ff -B -e '-Pfast,native,!docker' -Dskip-enforce -DskipTests -Dskip-validate-sources -Dfindbugs.skip -DskipIntegrationTests=true \
