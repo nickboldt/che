@@ -36,8 +36,8 @@ pushd dashboard
   time npm install yarn
   export PATH=${PATH}:`pwd`/node_modules/yarn/bin
   export TMPDIR=/tmp
-  yarn config set proxy http://username:password@host:port
-  yarn config set https-proxy http://username:password@host:port
+  yarn config set proxy ${NCL_PROXY}
+  yarn config set https-proxy ${NCL_PROXY}
 
   # apply patch to move from bower to yarn
   # https://github.com/nickboldt/che/tree/10881
