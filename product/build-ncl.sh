@@ -45,7 +45,7 @@ pushd dashboard
   patch -p 2 -F 2 --ignore-whitespace < ../product/10881-replace-bower-with-yarn.patch
 popd
 
-mvn clean deploy -V -ff -B -e '-Pfast,native,!docker' -Dskip-enforce -DskipTests -Dskip-validate-sources -Dfindbugs.skip -DskipIntegrationTests=true \
+mvn clean deploy -V -fae -B -e '-Pfast,native,!docker' -Dskip-enforce -DskipTests -Dskip-validate-sources -Dfindbugs.skip -DskipIntegrationTests=true \
 -Dmdep.analyze.skip=true -Dmaven.javadoc.skip -Dgpg.skip -Dorg.slf4j.simpleLogger.showDateTime=true \
 -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
 -DnodeDownloadRoot=${nodeDownloadRoot} -DnpmDownloadRoot=${npmDownloadRoot} -DnpmRegistryURL=${npmRegistryURL} ${1}
