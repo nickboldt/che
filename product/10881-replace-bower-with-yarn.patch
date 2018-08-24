@@ -224,7 +224,7 @@ index c43c0ac3eb..e99dbbbcb7 100644
                                          <!-- build user dashboard -->
 -                                        <exec dir="${basedir}" executable="npm" failonerror="true">
 +                                        <exec dir="${basedir}" executable="yarn" failonerror="true">
-                                             <arg value="install" />
+                                             <arg value="install"></arg>
                                          </exec>
                                          <!-- Change base HREF of the application that will be hosted on /dashboard -->
 @@ -221,7 +240,7 @@
@@ -233,8 +233,8 @@ index c43c0ac3eb..e99dbbbcb7 100644
                                          <!-- Run unit tests -->
 -                                        <exec dir="${basedir}" executable="npm" failonerror="true">
 +                                        <exec dir="${basedir}" executable="yarn" failonerror="true">
-                                             <arg value="run" />
-                                             <arg value="test />
+                                             <arg value="run"></arg>
+                                             <arg value="test"></arg>
                                          </exec>
 diff --git a/dashboard/src/app/index.styl b/dashboard/src/app/index.styl
 index e9598c8234..b74ba3b57c 100644
