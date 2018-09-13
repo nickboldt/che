@@ -15,13 +15,12 @@
 var path = require('path');
 var gulp = require('gulp');
 var conf = require('./conf');
+var concat = require('gulp-concat');
+var merge = require('merge-stream');
 
 var browserSync = require('browser-sync');
 
 var $ = require('gulp-load-plugins')();
-
-var wiredep = require('wiredep').stream;
-var _ = require('lodash');
 
 gulp.task('styles', function () {
 
@@ -42,15 +41,23 @@ gulp.task('styles', function () {
   };
 
 
-  return gulp.src([
+  var stylCss =  gulp.src([
     path.join(conf.paths.src, '/app/index.styl')
   ])
     .pipe($.inject(injectFiles, injectOptions))
-    .pipe(wiredep(_.extend({}, conf.wiredep)))
     .pipe($.sourcemaps.init())
     .pipe($.stylus()).on('error', conf.errorHandler('Stylus'))
     .pipe($.autoprefixer()).on('error', conf.errorHandler('Autoprefixer'))
     .pipe($.sourcemaps.write())
     .pipe(gulp.dest(path.join(conf.paths.tmp, '/serve/app/')))
     .pipe(browserSync.reload({ stream: true }));
+
+   var css = gulp.src([
+     path.join('node_modules/angular-material/**/*.css'),
+   ])
+     .pipe(concat('css-files.css'));
+
+   return merge(stylCss, css)
+     .pipe(gulp.dest(path.join(conf.paths.tmp, '/serve/app/')))
+     .pipe(browserSync.reload({ stream: true }));
 });
