@@ -34,16 +34,19 @@ pushd dashboard
   time npm install phantomjs-prebuilt
   export PATH=${PATH}:`pwd`/node_modules/phantomjs-prebuilt/bin
   time npm install yarn
-  export PATH=${PATH}:`pwd`/node_modules/yarn/bin
-  export TMPDIR=/tmp
-  yarn config set proxy http://username:password@host:port
-  yarn config set https-proxy http://username:password@host:port
+#  export PATH=${PATH}:`pwd`/node_modules/yarn/bin
+#  export TMPDIR=/tmp
+#  yarn config set proxy http://username:password@host:port
+#  yarn config set https-proxy http://username:password@host:port
 popd
 
 # apply patch to move from bower to yarn
 # https://github.com/nickboldt/che/tree/10881
 # path relative to root since we run this script as ./product/build-ncl.sh
-patch -p2 <product/10881-replace-bower-with-yarn.patch
+#patch -p2 <product/10881-replace-bower-with-yarn.patch
+
+# remove dashboard from the build
+sed -i "s#<module>dashboard</module>#<\!-- remove dashboard from the build until it can be build w/o Bower <module>dashboard</module> -->#" pom.xml
 
 mvn clean deploy -T 16 -V -ff -B -e '-Pfast,native,!docker' -Dskip-enforce -DskipTests -Dskip-validate-sources -Dfindbugs.skip -DskipIntegrationTests=true \
 -Dmdep.analyze.skip=true -Dmaven.javadoc.skip -Dgpg.skip -Dorg.slf4j.simpleLogger.showDateTime=true \
