@@ -11,8 +11,6 @@
  */
 'use strict';
 
-declare const uiCodemirrorDirective: any;
-
 export class CodeMirrorConstant {
 
   constructor(register: che.IRegisterService) {
@@ -27,13 +25,8 @@ export class CodeMirrorConstant {
         autoCloseBrackets: true,
         foldGutter: true,
         styleActiveLine: true,
-        theme: 'che',
-        onLoad: (editor: any) => {
-          editor.refresh();
-        }
+        theme: 'che'
       }
-    }).config(() => {
-      uiCodemirrorDirective.$inject = ['$timeout', 'udCodemirrorConfig']; // jshint ignore:line
     });
   }
 }
