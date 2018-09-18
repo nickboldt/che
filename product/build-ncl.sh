@@ -11,8 +11,13 @@
 # fix dashboard - migrate to Yarn
 # git cherry-pick --keep-redundant-commits 3005b907815118c8ebef75a09d51798e0b052077
 
+# remove dashboard from assembly-main -- requires using `-P!dashboard` profile
+# TODO: add this back in when we can make Yarn work with NCL's proxy
+# git cherry-pick 888d7a8e9f4df202ff49b076c61687144e93e71d
+
 # remove docs from assembly-main - requires using '-P!docs' profile
 # git cherry-pick --keep-redundant-commits c1fa62ae86f976d97247e726458f6e25ccf0611f
+
 
 ##########################################################################################
 # enable support for CI builds
@@ -123,7 +128,7 @@ popd
 # configure maven build 
 ##########################################################################################
 
-PROFILES='-Pfast,native,!docker,!docs'
+PROFILES='-Pfast,native,!docker,!docs,!dashboard'
 MVNFLAGS="-V -ff -B -e -Dskip-enforce -DskipTests -Dskip-validate-sources -Dfindbugs.skip -DskipIntegrationTests=true"
 MVNFLAGS="${MVNFLAGS} -Dmdep.analyze.skip=true -Dmaven.javadoc.skip -Dgpg.skip -Dorg.slf4j.simpleLogger.showDateTime=true"
 MVNFLAGS="${MVNFLAGS} -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss "
