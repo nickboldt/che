@@ -116,7 +116,7 @@ pushd dashboard
 	yarn config set https_proxy ${NCL_PROXY} --global
 	yarn config set YARN_REGISTRY ${YARN_REGISTRY} --global
 	yarn config list
-	YARN_REGISTRY=http://registry.yarnpkg.com:80/ yarn install
+	yarn install --frozen-lockfile --no-lockfile --pure-lockfile --ignore-optional --non-interactive --production=false
 popd
 
 ##########################################################################################
