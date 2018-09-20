@@ -82,7 +82,7 @@ export https_proxy="${NCL_PROXY}"
 export nodeDownloadRoot=http://nodejs.org:80/dist/
 export npmDownloadRoot=http://registry.npmjs.org:80/npm/-/
 export npmRegistryURL=http://registry.npmjs.org:80/
-export yarnRegistryURL=http://registry.yarnpkg.com:80/
+export YARN_REGISTRY=http://registry.yarnpkg.com:80/
 
 npm config set https-proxy ${NCL_PROXY}
 npm config set https_proxy ${NCL_PROXY}
@@ -108,14 +108,15 @@ pushd dashboard
 
 	time npm install yarn
 	PATH=${PATH}:`pwd`/node_modules/yarn/bin
-	yarn config set registry ${yarnRegistryURL} --global
+	yarn config set registry ${YARN_REGISTRY} --global
 	yarn config set proxy ${NCL_PROXY} --global
 	yarn config set yarn-proxy ${NCL_PROXY} --global
 	yarn config set yarn_proxy ${NCL_PROXY} --global
 	yarn config set https-proxy ${NCL_PROXY} --global
 	yarn config set https_proxy ${NCL_PROXY} --global
+	yarn config YARN_REGISTRY ${YARN_REGISTRY} --global
 	yarn config list
-	time yarn install
+	time yarn install --registry ${YARN_REGISTRY}
 popd
 
 ##########################################################################################
@@ -128,7 +129,7 @@ MVNFLAGS="${MVNFLAGS} -Dmdep.analyze.skip=true -Dmaven.javadoc.skip -Dgpg.skip -
 MVNFLAGS="${MVNFLAGS} -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss "
 MVNFLAGS="${MVNFLAGS} -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
 MVNFLAGS="${MVNFLAGS} -DnodeDownloadRoot=${nodeDownloadRoot} -DnpmDownloadRoot=${npmDownloadRoot}"
-MVNFLAGS="${MVNFLAGS} -DnpmRegistryURL=${npmRegistryURL} -DyarnRegistryURL=${yarnRegistryURL}"
+MVNFLAGS="${MVNFLAGS} -DnpmRegistryURL=${npmRegistryURL} -DYARN_REGISTRY=${YARN_REGISTRY}"
 
 ##########################################################################################
 # run maven build 
