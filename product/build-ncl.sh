@@ -19,22 +19,33 @@
 ##########################################################################################
 
 #set version & compute qualifier from best available in Indy
-version=6.12.0
-tmpfile=/tmp/maven-depmgt-pom-${version}.html
-# external 1: http://indy.cloud.pnc.engineering.redhat.com/api/group/static/org/eclipse/che/depmgt/maven-depmgt-pom
-# external 2: http://indy.cloud.pnc.engineering.redhat.com/api/content/maven/group/builds-untested+shared-imports+public/org/eclipse/che/depmgt/maven-depmgt-pom
-UPSTREAM_POM="api/content/maven/group/builds-untested+shared-imports+public/org/eclipse/che/depmgt/maven-depmgt-pom"
-INDY=http://indy.project-newcastle.svc.cluster.local
-if [[ ! $(wget ${INDY} -q -S 2>&1 | egrep "200|302|OK") ]]; then
-  INDY=http://pnc-indy-branch-nightly.project-newcastle.svc.cluster.local
+# or use commandline overrides for version and suffix
+
+if [[ $1 ]]; then
+	version="$1"
+else
+	version=6.12.0
 fi
-if [[ ! $(wget ${INDY} -q -S 2>&1 | egrep "200|302|OK") ]]; then
-  echo "[WARNING] Could not load org/eclipse/che/depmgt/maven-depmgt-pom from Indy"
+
+if [[ $2 ]]; then
+	suffix="$2"
+else
+	tmpfile=/tmp/maven-depmgt-pom-${version}.html
+	# external 1: http://indy.cloud.pnc.engineering.redhat.com/api/group/static/org/eclipse/che/depmgt/maven-depmgt-pom
+	# external 2: http://indy.cloud.pnc.engineering.redhat.com/api/content/maven/group/builds-untested+shared-imports+public/org/eclipse/che/depmgt/maven-depmgt-pom
+	UPSTREAM_POM="api/content/maven/group/builds-untested+shared-imports+public/org/eclipse/che/depmgt/maven-depmgt-pom"
+	INDY=http://indy.project-newcastle.svc.cluster.local
+	if [[ ! $(wget ${INDY} -q -S 2>&1 | egrep "200|302|OK") ]]; then
+		INDY=http://pnc-indy-branch-nightly.project-newcastle.svc.cluster.local
+	fi
+	if [[ ! $(wget ${INDY} -q -S 2>&1 | egrep "200|302|OK") ]]; then
+		echo "[WARNING] Could not load org/eclipse/che/depmgt/maven-depmgt-pom from Indy"
+	fi
+	wget ${INDY}/${UPSTREAM_POM} -O ${tmpfile}
+	suffix=$(grep ${version} ${tmpfile} | egrep '.redhat-[0-9]{5}' | sed -e "s#.\+>\([0-9.]\+\.\)\(redhat-[0-9]\{5\}\).*#\2#" | sort -r | head -1)
+	rm -f ${tmpfile}
 fi
-wget ${INDY}/${UPSTREAM_POM} -O ${tmpfile}
-suffix=$(grep ${version} ${tmpfile} | egrep '.redhat-[0-9]{5}' | sed -e "s#.\+>\([0-9.]\+\.\)\(redhat-[0-9]\{5\}\).*#\2#" | sort -r | head -1)
-rm -f ${tmpfile}
- 
+
 # replace pme version with the version from upstream parent pom, so we can resolve parent pom version 
 # and all artifacts in che-* builds use the same qualifier
 # TODO: might be able to skip this step once PNC 1.4 / PME 3.1 is rolled out:
@@ -45,12 +56,12 @@ rm -f ${tmpfile}
 # pmeVersionSHA=$(git describe --tags)
 # pmeSuffix=${pmeVersion#${version}.}; echo $suffix
 if [[ ${suffix} ]]; then 
-  for d in $(find . -name pom.xml); do sed -i "s#\(version>\)${version}.*\(</version>\)#\1${version}.${suffix}\2#g" $d; done
-  for d in $(find . -name pom.xml); do sed -i "s#\(<che.\+version>\)${version}.*\(</che.\+version>\)#\1${version}.${suffix}\2#g" $d; done
-  for d in $(find . -name pom.xml); do sed -i "s#\(<version>${version}\)-SNAPSHOT#\1.${suffix}#g" $d; done
-  mvn versions:set -DnewVersion=${version}.${suffix}
-  mvn versions:update-parent "-DparentVersion=${version}.${suffix}" -DallowSnapshots=false
-  for d in $(find . -maxdepth 1 -name pom.xml); do sed -i "s#\(<.\+\.version>.\+\)-SNAPSHOT#\1.${suffix}#g" $d; done
+	for d in $(find . -name pom.xml); do sed -i "s#\(version>\)${version}.*\(</version>\)#\1${version}.${suffix}\2#g" $d; done
+	for d in $(find . -name pom.xml); do sed -i "s#\(<che.\+version>\)${version}.*\(</che.\+version>\)#\1${version}.${suffix}\2#g" $d; done
+	for d in $(find . -name pom.xml); do sed -i "s#\(<version>${version}\)-SNAPSHOT#\1.${suffix}#g" $d; done
+	mvn versions:set -DnewVersion=${version}.${suffix}
+	mvn versions:update-parent "-DparentVersion=${version}.${suffix}" -DallowSnapshots=false
+	for d in $(find . -maxdepth 1 -name pom.xml); do sed -i "s#\(<.\+\.version>.\+\)-SNAPSHOT#\1.${suffix}#g" $d; done
 fi
 
 ##########################################################################################
@@ -82,9 +93,9 @@ npm config set fetch-retry-mintimeout 60000
 npm config set registry ${npmRegistryURL}
 
 pushd dashboard
-  npm install yarn
-  ./node_modules/yarn/bin/yarn config set proxy ${NCL_PROXY}
-  ./node_modules/yarn/bin/yarn config set https-proxy ${NCL_PROXY}
+	npm install yarn
+	./node_modules/yarn/bin/yarn config set proxy ${NCL_PROXY}
+	./node_modules/yarn/bin/yarn config set https-proxy ${NCL_PROXY}
 popd
 
 ##########################################################################################
