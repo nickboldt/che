@@ -114,7 +114,7 @@ pushd dashboard
 	yarn config set yarn_proxy ${NCL_PROXY} --global
 	yarn config set https-proxy ${NCL_PROXY} --global
 	yarn config set https_proxy ${NCL_PROXY} --global
-	yarn config YARN_REGISTRY ${YARN_REGISTRY} --global
+	yarn config set YARN_REGISTRY ${YARN_REGISTRY} --global
 	yarn config list
 	time yarn install --registry ${YARN_REGISTRY}
 popd
