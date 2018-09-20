@@ -79,10 +79,13 @@ export NCL_PROXY="http://${buildContentId}+tracking:${accessToken}@${proxyServer
 export http_proxy="${NCL_PROXY}"
 export https_proxy="${NCL_PROXY}"
 
-nodeDownloadRoot=http://nodejs.org:80/dist/
-npmDownloadRoot=http://registry.npmjs.org:80/npm/-/
-npmRegistryURL=http://registry.npmjs.org:80/
+export nodeDownloadRoot=http://nodejs.org:80/dist/
+export npmDownloadRoot=http://registry.npmjs.org:80/npm/-/
+export npmRegistryURL=http://registry.npmjs.org:80/
+export yarnRegistryURL=http://registry.yarnpkg.com:80/
+
 npm config set https-proxy ${NCL_PROXY}
+npm config set https_proxy ${NCL_PROXY}
 npm config set proxy ${NCL_PROXY}
 #silent, warn, info, verbose, silly
 npm config set loglevel warn 
@@ -91,6 +94,7 @@ npm config set maxsockets 80
 npm config set fetch-retries 10
 npm config set fetch-retry-mintimeout 60000
 npm config set registry ${npmRegistryURL}
+npm config list
 
 # workaround for lack of https support and inability to see github.com as a result
 mkdir -p /tmp/phantomjs/
@@ -104,9 +108,13 @@ pushd dashboard
 
 	time npm install yarn
 	PATH=${PATH}:`pwd`/node_modules/yarn/bin
-	yarn config set registry http://registry.yarnpkg.com
-	yarn config set proxy ${NCL_PROXY}
-	yarn config set https-proxy ${NCL_PROXY}
+	yarn config set registry ${yarnRegistryURL} --global
+	yarn config set proxy ${NCL_PROXY} --global
+	yarn config set yarn-proxy ${NCL_PROXY} --global
+	yarn config set yarn_proxy ${NCL_PROXY} --global
+	yarn config set https-proxy ${NCL_PROXY} --global
+	yarn config set https_proxy ${NCL_PROXY} --global
+	yarn config list
 	time yarn install
 popd
 
@@ -120,7 +128,7 @@ MVNFLAGS="${MVNFLAGS} -Dmdep.analyze.skip=true -Dmaven.javadoc.skip -Dgpg.skip -
 MVNFLAGS="${MVNFLAGS} -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss "
 MVNFLAGS="${MVNFLAGS} -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
 MVNFLAGS="${MVNFLAGS} -DnodeDownloadRoot=${nodeDownloadRoot} -DnpmDownloadRoot=${npmDownloadRoot}"
-MVNFLAGS="${MVNFLAGS} -DnpmRegistryURL=${npmRegistryURL}"
+MVNFLAGS="${MVNFLAGS} -DnpmRegistryURL=${npmRegistryURL} -DyarnRegistryURL=${yarnRegistryURL}"
 
 ##########################################################################################
 # run maven build 
