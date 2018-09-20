@@ -94,8 +94,11 @@ npm config set registry ${npmRegistryURL}
 
 pushd dashboard
 	npm install yarn
-	./node_modules/yarn/bin/yarn config set proxy ${NCL_PROXY}
-	./node_modules/yarn/bin/yarn config set https-proxy ${NCL_PROXY}
+	PATH=${PATH}:$(pwd)/node_modules/yarn/bin
+	yarn config set registry http://registry.yarnpkg.com
+	yarn config set proxy ${NCL_PROXY}
+	yarn config set https-proxy ${NCL_PROXY}
+	yarn install
 popd
 
 ##########################################################################################
