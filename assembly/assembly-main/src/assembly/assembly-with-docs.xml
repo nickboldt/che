@@ -20,7 +20,7 @@
         <format>tar.gz</format>
     </formats>
     <dependencySets>
-        <!-- <dependencySet>
+        <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
             <unpack>false</unpack>
             <outputDirectory>tomcat/webapps</outputDirectory>
@@ -28,7 +28,7 @@
             <includes>
                 <include>org.eclipse.che.docs:che-docs</include>
             </includes>
-        </dependencySet> -->
+        </dependencySet>
         <dependencySet>
             <useProjectArtifact>false</useProjectArtifact>
             <unpack>false</unpack>
@@ -72,15 +72,6 @@
             <outputFileNameMapping>swagger.war</outputFileNameMapping>
             <includes>
                 <include>org.eclipse.che.lib:che-swagger-war</include>
-            </includes>
-        </dependencySet>
-        <dependencySet>
-            <useProjectArtifact>false</useProjectArtifact>
-            <unpack>false</unpack>
-            <outputDirectory>lib</outputDirectory>
-            <outputFileNameMapping>jdt.ls.tar.gz</outputFileNameMapping>
-            <includes>
-                <include>org.eclipse.che.ls.jdt:jdt.ls.extension.product</include>
             </includes>
         </dependencySet>
         <dependencySet>
