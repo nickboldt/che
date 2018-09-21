@@ -101,14 +101,14 @@ npm config set fetch-retry-mintimeout 60000
 npm config set registry ${npmRegistryURL}
 npm config list
 
-# workaround for lack of https support and inability to see github.com as a result
-mkdir -p /tmp/phantomjs/
-pushd /tmp/phantomjs/
-	# previously mirrored from https://github.com/Medium/phantomjs/releases/download/v2.1.1/phantomjs-2.1.1-linux-x86_64.tar.bz2
-	time wget -q http://download.jboss.org/jbosstools/updates/requirements/node/phantomjs/phantomjs-2.1.1-linux-x86_64.tar.bz2
-popd
-
 if [[ $includeDashboard -gt 0 ]]; then
+	# workaround for lack of https support and inability to see github.com as a result
+	mkdir -p /tmp/phantomjs/
+	pushd /tmp/phantomjs/
+		# previously mirrored from https://github.com/Medium/phantomjs/releases/download/v2.1.1/phantomjs-2.1.1-linux-x86_64.tar.bz2
+		time wget -q http://download.jboss.org/jbosstools/updates/requirements/node/phantomjs/phantomjs-2.1.1-linux-x86_64.tar.bz2
+	popd
+
 	pushd dashboard
 		time npm install phantomjs-prebuilt
 		export PATH=${PATH}:`pwd`/node_modules/phantomjs-prebuilt/bin
