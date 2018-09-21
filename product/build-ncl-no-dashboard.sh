@@ -11,8 +11,10 @@
 # fix dashboard - migrate to Yarn
 # git cherry-pick --keep-redundant-commits 3005b907815118c8ebef75a09d51798e0b052077
 
-# don't build dashboard from source; include from upstream binary in http://oss.sonatype.org/content/repositories/snapshots/
-includeDashboardFromSource=0
+# remove dashboard from assembly-main -- requires using `-P!dashboard` profile
+# TODO: add this back in when we can make Yarn work with NCL's proxy
+# git cherry-pick 888d7a8e9f4df202ff49b076c61687144e93e71d
+includeDashboard=0
 
 # remove docs from assembly-main - requires using '-P!docs' profile
 # git cherry-pick --keep-redundant-commits c1fa62ae86f976d97247e726458f6e25ccf0611f
@@ -31,7 +33,6 @@ while [[ "$#" -gt 0 ]]; do
 	case $1 in
 		'-v') version="$2"; shift 1;; #eg., 6.12.0
 		'-s') suffix="$2"; shift 1;; # eg., redhat-00007
-		'-dv') includeDashboardVersion="$2"; shift 1;; # eg., 6.11.1 or 6.12.0-SNAPSHOT
 		*) OTHER="${OTHER} $1"; shift 0;; 
 	esac
 	shift 1
@@ -54,10 +55,6 @@ if [[ ! ${suffix} ]]; then # compute it from version of org/eclipse/che/depmgt/m
   rm -f ${tmpfile}
 fi
 
-if [[ ! ${includeDashboardVersion} ]]; then
-  includeDashboardVersion=${version}-SNAPSHOT
-fi
-
 # replace pme version with the version from upstream parent pom, so we can resolve parent pom version 
 # and all artifacts in che-* builds use the same qualifier
 # TODO: might be able to skip this step once PNC 1.4 / PME 3.1 is rolled out:
@@ -68,12 +65,12 @@ fi
 # pmeVersionSHA=$(git describe --tags)
 # pmeSuffix=${pmeVersion#${version}.}; echo $suffix
 if [[ ${suffix} ]]; then 
-  for d in $(find . -name pom.xml); do sed -i "s#\(version>\)${version}.*\(</version>\)#\1${version}.${suffix}\2#g" $d; done
-  for d in $(find . -name pom.xml); do sed -i "s#\(<che.\+version>\)${version}.*\(</che.\+version>\)#\1${version}.${suffix}\2#g" $d; done
-  for d in $(find . -name pom.xml); do sed -i "s#\(<version>${version}\)-SNAPSHOT#\1.${suffix}#g" $d; done
-  mvn versions:set -DnewVersion=${version}.${suffix}
-  mvn versions:update-parent "-DparentVersion=${version}.${suffix}" -DallowSnapshots=false
-  for d in $(find . -maxdepth 1 -name pom.xml); do sed -i "s#\(<.\+\.version>.\+\)-SNAPSHOT#\1.${suffix}#g" $d; done
+	for d in $(find . -name pom.xml); do sed -i "s#\(version>\)${version}.*\(</version>\)#\1${version}.${suffix}\2#g" $d; done
+	for d in $(find . -name pom.xml); do sed -i "s#\(<che.\+version>\)${version}.*\(</che.\+version>\)#\1${version}.${suffix}\2#g" $d; done
+	for d in $(find . -name pom.xml); do sed -i "s#\(<version>${version}\)-SNAPSHOT#\1.${suffix}#g" $d; done
+	mvn versions:set -DnewVersion=${version}.${suffix}
+	mvn versions:update-parent "-DparentVersion=${version}.${suffix}" -DallowSnapshots=false
+	for d in $(find . -maxdepth 1 -name pom.xml); do sed -i "s#\(<.\+\.version>.\+\)-SNAPSHOT#\1.${suffix}#g" $d; done
 fi
 
 ##########################################################################################
@@ -108,33 +105,32 @@ npm config set fetch-retry-mintimeout 60000
 npm config set registry ${npmRegistryURL}
 npm config list
 
+if [[ $includeDashboard -gt 0 ]]; then
+	# workaround for lack of https support and inability to see github.com as a result
+	mkdir -p /tmp/phantomjs/
+	pushd /tmp/phantomjs/
+		# previously mirrored from https://github.com/Medium/phantomjs/releases/download/v2.1.1/phantomjs-2.1.1-linux-x86_64.tar.bz2
+		time wget -q http://download.jboss.org/jbosstools/updates/requirements/node/phantomjs/phantomjs-2.1.1-linux-x86_64.tar.bz2
+	popd
 
-if [[ $includeDashboardFromSource -gt 0 ]]; then
-  # workaround for lack of https support and inability to see github.com as a result
-  mkdir -p /tmp/phantomjs/
-  pushd /tmp/phantomjs/
-    # previously mirrored from https://github.com/Medium/phantomjs/releases/download/v2.1.1/phantomjs-2.1.1-linux-x86_64.tar.bz2
-    time wget -q http://download.jboss.org/jbosstools/updates/requirements/node/phantomjs/phantomjs-2.1.1-linux-x86_64.tar.bz2
-  popd
+	pushd dashboard
+		time npm install phantomjs-prebuilt
+		export PATH=${PATH}:`pwd`/node_modules/phantomjs-prebuilt/bin
 
-  pushd dashboard
-    time npm install phantomjs-prebuilt
-    export PATH=${PATH}:`pwd`/node_modules/phantomjs-prebuilt/bin
+		time npm install yarn
+		PATH=${PATH}:`pwd`/node_modules/yarn/bin
+		yarn config set registry ${YARN_REGISTRY} --global
+		yarn config set YARN_REGISTRY ${YARN_REGISTRY} --global
 
-    time npm install yarn
-    PATH=${PATH}:`pwd`/node_modules/yarn/bin
-    yarn config set registry ${YARN_REGISTRY} --global
-    yarn config set YARN_REGISTRY ${YARN_REGISTRY} --global
+		yarn config set proxy ${NCL_PROXY} --global
+		yarn config set yarn-proxy ${NCL_PROXY} --global
+		yarn config set yarn_proxy ${NCL_PROXY} --global
 
-    yarn config set proxy ${NCL_PROXY} --global
-    yarn config set yarn-proxy ${NCL_PROXY} --global
-    yarn config set yarn_proxy ${NCL_PROXY} --global
-
-    yarn config set https-proxy false --global
-    yarn config set https_proxy false --global
-    yarn config list
-    yarn install --frozen-lockfile --no-lockfile --pure-lockfile --ignore-optional --non-interactive --production=false
-  popd
+		yarn config set https-proxy false --global
+		yarn config set https_proxy false --global
+		yarn config list
+		yarn install --frozen-lockfile --no-lockfile --pure-lockfile --ignore-optional --non-interactive --production=false
+	popd
 fi
 
 ##########################################################################################
@@ -142,6 +138,9 @@ fi
 ##########################################################################################
 
 PROFILES='-Pfast,native,!docker,!docs'
+if [[ $includeDashboard -eq 0 ]]; then
+	PROFILES="${PROFILES}"',!dashboard'
+fi
 
 MVNFLAGS="-V -ff -B -e -Dskip-enforce -DskipTests -Dskip-validate-sources -Dfindbugs.skip -DskipIntegrationTests=true"
 MVNFLAGS="${MVNFLAGS} -Dmdep.analyze.skip=true -Dmaven.javadoc.skip -Dgpg.skip -Dorg.slf4j.simpleLogger.showDateTime=true"
@@ -149,13 +148,6 @@ MVNFLAGS="${MVNFLAGS} -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss "
 MVNFLAGS="${MVNFLAGS} -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
 MVNFLAGS="${MVNFLAGS} -DnodeDownloadRoot=${nodeDownloadRoot} -DnpmDownloadRoot=${npmDownloadRoot}"
 MVNFLAGS="${MVNFLAGS} -DnpmRegistryURL=${npmRegistryURL} -DYARN_REGISTRY=${YARN_REGISTRY}"
-
-if [[ $includeDashboardVersion ]]; then
-  if [[ ${includeDashboardVersion} == *"-SNAPSHOT" ]]; then snapOrRel="snapshots"; else snapOrRel="releases"; fi # echo $snapOrRel
-  cheDashboardVersion=$(wget -q https://oss.sonatype.org/content/repositories/${snapOrRel}/org/eclipse/che/dashboard/che-dashboard-war/${includeDashboardVersion}/maven-metadata.xml -O - \
-  | grep value | tail -1 | sed -e "s#.*<value>\(.\+\)</value>#\1#")
-  MVNFLAGS="${MVNFLAGS} -Dche.dashboard.version=${cheDashboardVersion}"
-fi
 
 ##########################################################################################
 # run maven build 
