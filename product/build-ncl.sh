@@ -14,10 +14,10 @@
 # remove dashboard from assembly-main -- requires using `-P!dashboard` profile
 # TODO: add this back in when we can make Yarn work with NCL's proxy
 # git cherry-pick 888d7a8e9f4df202ff49b076c61687144e93e71d
+includeDashboard=0
 
 # remove docs from assembly-main - requires using '-P!docs' profile
 # git cherry-pick --keep-redundant-commits c1fa62ae86f976d97247e726458f6e25ccf0611f
-
 
 ##########################################################################################
 # enable support for CI builds
@@ -107,28 +107,35 @@ pushd /tmp/phantomjs/
 	# previously mirrored from https://github.com/Medium/phantomjs/releases/download/v2.1.1/phantomjs-2.1.1-linux-x86_64.tar.bz2
 	time wget -q http://download.jboss.org/jbosstools/updates/requirements/node/phantomjs/phantomjs-2.1.1-linux-x86_64.tar.bz2
 popd
-pushd dashboard
-	time npm install phantomjs-prebuilt
-	export PATH=${PATH}:`pwd`/node_modules/phantomjs-prebuilt/bin
 
-	time npm install yarn
-	PATH=${PATH}:`pwd`/node_modules/yarn/bin
-	yarn config set registry ${YARN_REGISTRY} --global
-	yarn config set proxy ${NCL_PROXY} --global
-	yarn config set yarn-proxy ${NCL_PROXY} --global
-	yarn config set yarn_proxy ${NCL_PROXY} --global
-	yarn config set https-proxy ${NCL_PROXY} --global
-	yarn config set https_proxy ${NCL_PROXY} --global
-	yarn config set YARN_REGISTRY ${YARN_REGISTRY} --global
-	yarn config list
-	yarn install --frozen-lockfile --no-lockfile --pure-lockfile --ignore-optional --non-interactive --production=false
-popd
+if [[ $includeDashboard -gt 0 ]]; then
+	pushd dashboard
+		time npm install phantomjs-prebuilt
+		export PATH=${PATH}:`pwd`/node_modules/phantomjs-prebuilt/bin
+
+		time npm install yarn
+		PATH=${PATH}:`pwd`/node_modules/yarn/bin
+		yarn config set registry ${YARN_REGISTRY} --global
+		yarn config set proxy ${NCL_PROXY} --global
+		yarn config set yarn-proxy ${NCL_PROXY} --global
+		yarn config set yarn_proxy ${NCL_PROXY} --global
+		yarn config set https-proxy ${NCL_PROXY} --global
+		yarn config set https_proxy ${NCL_PROXY} --global
+		yarn config set YARN_REGISTRY ${YARN_REGISTRY} --global
+		yarn config list
+		yarn install --frozen-lockfile --no-lockfile --pure-lockfile --ignore-optional --non-interactive --production=false
+	popd
+fi
 
 ##########################################################################################
 # configure maven build 
 ##########################################################################################
 
-PROFILES='-Pfast,native,!docker,!docs,!dashboard'
+PROFILES='-Pfast,native,!docker,!docs'
+if [[ $includeDashboard -eq 0 ]]; then
+	PROFILES="${PROFILES}"',!dashboard'
+fi
+
 MVNFLAGS="-V -ff -B -e -Dskip-enforce -DskipTests -Dskip-validate-sources -Dfindbugs.skip -DskipIntegrationTests=true"
 MVNFLAGS="${MVNFLAGS} -Dmdep.analyze.skip=true -Dmaven.javadoc.skip -Dgpg.skip -Dorg.slf4j.simpleLogger.showDateTime=true"
 MVNFLAGS="${MVNFLAGS} -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss "
