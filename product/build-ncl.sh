@@ -25,30 +25,34 @@ includeDashboard=0
 
 #set version & compute qualifier from best available in Indy
 # or use commandline overrides for version and suffix
+version=6.12.0
+suffix="" # normally we compute this from version of org/eclipse/che/depmgt/maven-depmgt-pom but can override if needed
 
-if [[ $1 ]]; then
-	version="$1"
-else
-	version=6.12.0
-fi
+# read commandline args
+while [[ "$#" -gt 0 ]]; do
+	case $1 in
+		'-v') version="$2"; shift 1;; #eg., 6.12.0
+		'-s') suffix="$2"; shift 1;; # eg., redhat-00007
+		*) OTHER="${OTHER} $1"; shift 0;; 
+	esac
+	shift 1
+done
 
-if [[ $2 ]]; then
-	suffix="$2"
-else
-	tmpfile=/tmp/maven-depmgt-pom-${version}.html
-	# external 1: http://indy.cloud.pnc.engineering.redhat.com/api/group/static/org/eclipse/che/depmgt/maven-depmgt-pom
-	# external 2: http://indy.cloud.pnc.engineering.redhat.com/api/content/maven/group/builds-untested+shared-imports+public/org/eclipse/che/depmgt/maven-depmgt-pom
-	UPSTREAM_POM="api/content/maven/group/builds-untested+shared-imports+public/org/eclipse/che/depmgt/maven-depmgt-pom"
-	INDY=http://indy.project-newcastle.svc.cluster.local
-	if [[ ! $(wget ${INDY} -q -S 2>&1 | egrep "200|302|OK") ]]; then
-		INDY=http://pnc-indy-branch-nightly.project-newcastle.svc.cluster.local
-	fi
-	if [[ ! $(wget ${INDY} -q -S 2>&1 | egrep "200|302|OK") ]]; then
-		echo "[WARNING] Could not load org/eclipse/che/depmgt/maven-depmgt-pom from Indy"
-	fi
-	wget ${INDY}/${UPSTREAM_POM} -O ${tmpfile}
-	suffix=$(grep ${version} ${tmpfile} | egrep '.redhat-[0-9]{5}' | sed -e "s#.\+>\([0-9.]\+\.\)\(redhat-[0-9]\{5\}\).*#\2#" | sort -r | head -1)
-	rm -f ${tmpfile}
+if [[ ! ${suffix} ]]; then # compute it from version of org/eclipse/che/depmgt/maven-depmgt-pom
+  tmpfile=/tmp/maven-depmgt-pom-${version}.html
+  # external 1: http://indy.cloud.pnc.engineering.redhat.com/api/group/static/org/eclipse/che/depmgt/maven-depmgt-pom
+  # external 2: http://indy.cloud.pnc.engineering.redhat.com/api/content/maven/group/builds-untested+shared-imports+public/org/eclipse/che/depmgt/maven-depmgt-pom
+  UPSTREAM_POM="api/content/maven/group/builds-untested+shared-imports+public/org/eclipse/che/depmgt/maven-depmgt-pom"
+  INDY=http://indy.project-newcastle.svc.cluster.local
+  if [[ ! $(wget ${INDY} -q -S 2>&1 | egrep "200|302|OK") ]]; then
+    INDY=http://pnc-indy-branch-nightly.project-newcastle.svc.cluster.local
+  fi
+  if [[ ! $(wget ${INDY} -q -S 2>&1 | egrep "200|302|OK") ]]; then
+    echo "[WARNING] Could not load org/eclipse/che/depmgt/maven-depmgt-pom from Indy"
+  fi
+  wget ${INDY}/${UPSTREAM_POM} -O ${tmpfile}
+  suffix=$(grep ${version} ${tmpfile} | egrep '.redhat-[0-9]{5}' | sed -e "s#.\+>\([0-9.]\+\.\)\(redhat-[0-9]\{5\}\).*#\2#" | sort -r | head -1)
+  rm -f ${tmpfile}
 fi
 
 # replace pme version with the version from upstream parent pom, so we can resolve parent pom version 
