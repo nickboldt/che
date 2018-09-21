@@ -116,12 +116,14 @@ if [[ $includeDashboard -gt 0 ]]; then
 		time npm install yarn
 		PATH=${PATH}:`pwd`/node_modules/yarn/bin
 		yarn config set registry ${YARN_REGISTRY} --global
+		yarn config set YARN_REGISTRY ${YARN_REGISTRY} --global
+
 		yarn config set proxy ${NCL_PROXY} --global
 		yarn config set yarn-proxy ${NCL_PROXY} --global
 		yarn config set yarn_proxy ${NCL_PROXY} --global
-		yarn config set https-proxy ${NCL_PROXY} --global
-		yarn config set https_proxy ${NCL_PROXY} --global
-		yarn config set YARN_REGISTRY ${YARN_REGISTRY} --global
+
+		yarn config set https-proxy false --global
+		yarn config set https_proxy false --global
 		yarn config list
 		yarn install --frozen-lockfile --no-lockfile --pure-lockfile --ignore-optional --non-interactive --production=false
 	popd
