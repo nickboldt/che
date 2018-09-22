@@ -33,6 +33,7 @@ while [[ "$#" -gt 0 ]]; do
 	case $1 in
 		'-v') version="$2"; shift 1;; #eg., 6.12.0
 		'-s') suffix="$2"; shift 1;; # eg., redhat-00007
+		'-includeDashboard') includeDashboard="1"; shift 0;;
 		*) OTHER="${OTHER} $1"; shift 0;; 
 	esac
 	shift 1
