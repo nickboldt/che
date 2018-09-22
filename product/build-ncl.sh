@@ -153,8 +153,8 @@ MVNFLAGS="${MVNFLAGS} -DnpmRegistryURL=${npmRegistryURL} -DYARN_REGISTRY=${YARN_
 if [[ $includeDashboardVersion ]]; then
   if [[ ${includeDashboardVersion} == *"-SNAPSHOT" ]]; then snapOrRel="snapshots"; else snapOrRel="releases"; fi # echo $snapOrRel
   wget -q http://oss.sonatype.org/content/repositories/${snapOrRel}/org/eclipse/che/dashboard/che-dashboard-war/${includeDashboardVersion}/maven-metadata.xml -O /tmp/mm.xml
-  grep value /tmp/mm.xml | tail -1 | sed -e "s#.*<value>\(.\+\)</value>#\1#" && rm -f /tmp/mm.xml
-  if [[ ! ${cheDashboardVersion} ]]; then cheDashboardVersion=includeDashboardVersion; fi # fallback to 6.12.0-SNAPSHOT if not resolved
+  cheDashboardVersion=$(grep value /tmp/mm.xml | tail -1 | sed -e "s#.*<value>\(.\+\)</value>#\1#" && rm -f /tmp/mm.xml)
+  if [[ ! ${cheDashboardVersion} ]]; then cheDashboardVersion=${includeDashboardVersion}; fi # fallback to 6.12.0-SNAPSHOT if not resolved
   MVNFLAGS="${MVNFLAGS} -Dche.dashboard.version=${cheDashboardVersion}"
 fi
 
