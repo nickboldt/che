@@ -106,7 +106,7 @@ npm config set maxsockets 80
 npm config set fetch-retries 10
 npm config set fetch-retry-mintimeout 60000
 npm config set registry ${npmRegistryURL}
-npm config list
+# npm config list
 
 
 if [[ $includeDashboardFromSource -gt 0 ]]; then
@@ -148,7 +148,11 @@ MVNFLAGS="${MVNFLAGS} -Dmdep.analyze.skip=true -Dmaven.javadoc.skip -Dgpg.skip -
 MVNFLAGS="${MVNFLAGS} -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss "
 MVNFLAGS="${MVNFLAGS} -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
 MVNFLAGS="${MVNFLAGS} -DnodeDownloadRoot=${nodeDownloadRoot} -DnpmDownloadRoot=${npmDownloadRoot}"
-MVNFLAGS="${MVNFLAGS} -DnpmRegistryURL=${npmRegistryURL} -DYARN_REGISTRY=${YARN_REGISTRY}"
+MVNFLAGS="${MVNFLAGS} -DnpmRegistryURL=${npmRegistryURL}"
+
+if [[ $includeDashboardFromSource ]]; then
+  MVNFLAGS="${MVNFLAGS} -DYARN_REGISTRY=${YARN_REGISTRY}"
+fi
 
 if [[ $includeDashboardVersion ]]; then
   if [[ ${includeDashboardVersion} == *"-SNAPSHOT" ]]; then snapOrRel="snapshots"; else snapOrRel="releases"; fi # echo $snapOrRel
