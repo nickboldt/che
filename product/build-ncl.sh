@@ -38,10 +38,10 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 if [[ ! ${suffix} ]]; then # compute it from version of org/eclipse/che/depmgt/maven-depmgt-pom
-  tmpfile=/tmp/maven-depmgt-pom-${version}.html
+  tmpfile=/tmp/maven-metadata-${version}.html
   # external 1: http://indy.cloud.pnc.engineering.redhat.com/api/group/static/org/eclipse/che/depmgt/maven-depmgt-pom
   # external 2: http://indy.cloud.pnc.engineering.redhat.com/api/content/maven/group/builds-untested+shared-imports+public/org/eclipse/che/depmgt/maven-depmgt-pom
-  UPSTREAM_POM="api/content/maven/group/builds-untested+shared-imports+public/org/eclipse/che/depmgt/maven-depmgt-pom"
+  UPSTREAM_POM="api/content/maven/group/builds-untested+shared-imports+public/org/eclipse/che/depmgt/maven-depmgt-pom/maven-metadata.xml"
   INDY=http://indy.project-newcastle.svc.cluster.local
   if [[ ! $(wget ${INDY} -q -S 2>&1 | egrep "200|302|OK") ]]; then
     INDY=http://pnc-indy-branch-nightly.project-newcastle.svc.cluster.local
@@ -50,7 +50,7 @@ if [[ ! ${suffix} ]]; then # compute it from version of org/eclipse/che/depmgt/m
     echo "[WARNING] Could not load org/eclipse/che/depmgt/maven-depmgt-pom from Indy"
   fi
   wget ${INDY}/${UPSTREAM_POM} -O ${tmpfile}
-  suffix=$(grep ${version} ${tmpfile} | egrep '.redhat-[0-9]{5}' | sed -e "s#.\+>\([0-9.]\+\.\)\(redhat-[0-9]\{5\}\).*#\2#" | sort -r | head -1)
+  suffix=$(grep ${version} ${tmpfile} | grep "<latest>" | egrep '.redhat-[0-9]{5}' | sed -e "s#.\+>\([0-9.]\+\.\)\(redhat-[0-9]\{5\}\).*#\2#" | sort -r | head -1)
   rm -f ${tmpfile}
 fi
 
