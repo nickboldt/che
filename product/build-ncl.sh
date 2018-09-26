@@ -25,13 +25,15 @@ includeDashboardFromSource=0
 # or use commandline overrides for version and suffix
 version=6.12.0
 suffix="" # normally we compute this from version of org/eclipse/che/depmgt/maven-depmgt-pom but can override if needed
+upstreamPom=org/eclipse/che/depmgt/maven-depmgt-pom # usually use depmgt/maven-depmgt-pom but can also align to che-parent for codeready-workspaces build
 
 # read commandline args
 while [[ "$#" -gt 0 ]]; do
 	case $1 in
 		'-v') version="$2"; shift 1;; #eg., 6.12.0
 		'-s') suffix="$2"; shift 1;; # eg., redhat-00007
-		'-dv') includeDashboardVersion="$2"; shift 1;; # eg., 6.11.1 or 6.12.0-SNAPSHOT
+    '-dv') includeDashboardVersion="$2"; shift 1;; # eg., 6.11.1 or 6.12.0-SNAPSHOT
+    '-up') upstreamPom="$2"; shift 1;; # eg., 6.11.1 or 6.12.0-SNAPSHOT
 		*) OTHER="${OTHER} $1"; shift 0;; 
 	esac
 	shift 1
@@ -39,9 +41,9 @@ done
 
 if [[ ! ${suffix} ]]; then # compute it from version of org/eclipse/che/depmgt/maven-depmgt-pom
   tmpfile=/tmp/maven-metadata-${version}.html
-  # external 1: http://indy.cloud.pnc.engineering.redhat.com/api/group/static/org/eclipse/che/depmgt/maven-depmgt-pom
-  # external 2: http://indy.cloud.pnc.engineering.redhat.com/api/content/maven/group/builds-untested+shared-imports+public/org/eclipse/che/depmgt/maven-depmgt-pom
-  UPSTREAM_POM="api/content/maven/group/builds-untested+shared-imports+public/org/eclipse/che/depmgt/maven-depmgt-pom/maven-metadata.xml"
+  # external 1: http://indy.cloud.pnc.engineering.redhat.com/api/group/static/org/eclipse/che/depmgt/maven-depmgt-pom/ or /che/che-parent/
+  # external 2: http://indy.cloud.pnc.engineering.redhat.com/api/content/maven/group/builds-untested+shared-imports+public/org/eclipse/che/depmgt/maven-depmgt-pom/
+  UPSTREAM_POM="api/content/maven/group/builds-untested+shared-imports+public/${upstreamPom}/maven-metadata.xml"
   INDY=http://indy.project-newcastle.svc.cluster.local
   if [[ ! $(wget ${INDY} -q -S 2>&1 | egrep "200|302|OK") ]]; then
     INDY=http://pnc-indy-branch-nightly.project-newcastle.svc.cluster.local
