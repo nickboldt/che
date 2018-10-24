@@ -81,10 +81,11 @@ fi
 if [[ ${suffix} ]]; then 
   for d in $(find . -name pom.xml); do sed -i "s#\(version>\)${version}.*\(</version>\)#\1${version}.${suffix}\2#g" $d; done
   for d in $(find . -name pom.xml); do sed -i "s#\(<che.\+version>\)${version}.*\(</che.\+version>\)#\1${version}.${suffix}\2#g" $d; done
-  for d in $(find . -name pom.xml); do sed -i "s#\(<version>${version}\)-SNAPSHOT#\1.${suffix}#g" $d; done
-  mvn versions:set -DnewVersion=${version}.${suffix}
-  mvn versions:update-parent "-DparentVersion=${version}.${suffix}" -DallowSnapshots=false
-  for d in $(find . -maxdepth 1 -name pom.xml); do sed -i "s#\(<.\+\.version>.\+\)-SNAPSHOT#\1.${suffix}#g" $d; done
+  for d in $(find . -name pom.xml); do sed -i "s#\(<version>${version}\)-SNAPSHOT#\1.${suffix}#g" $d; done # may not be needed 
+  # not needed - the sed replacements are faster and just as effective
+  #mvn versions:set -DnewVersion=${version}.${suffix}
+  #mvn versions:update-parent "-DparentVersion=${version}.${suffix}" -DallowSnapshots=false
+  for d in $(find . -maxdepth 1 -name pom.xml); do sed -i "s#\(<.\+\.version>.\+\)-SNAPSHOT#\1.${suffix}#g" $d; done # may not be needed 
 fi
 
 ##########################################################################################
@@ -107,6 +108,7 @@ export npmDownloadRoot=http://registry.npmjs.org:80/npm/-/
 export npmRegistryURL=http://registry.npmjs.org:80/
 export YARN_REGISTRY=http://registry.yarnpkg.com:80/
 
+npm config set strict-ssl=false
 npm config set https-proxy ${NCL_PROXY}
 npm config set https_proxy ${NCL_PROXY}
 npm config set proxy ${NCL_PROXY}
@@ -117,7 +119,7 @@ npm config set maxsockets 80
 npm config set fetch-retries 10
 npm config set fetch-retry-mintimeout 60000
 npm config set registry ${npmRegistryURL}
-# npm config list
+npm config list
 
 
 if [[ $includeDashboardFromSource -gt 0 ]]; then
