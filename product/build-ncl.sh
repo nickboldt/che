@@ -170,10 +170,10 @@ if [[ $includeDashboardFromSource ]]; then
 fi
 
 if [[ $includeDashboardVersion ]]; then
-  if [[ ${includeDashboardVersion} == *"-SNAPSHOT" ]]; then snapOrRel="snapshots"; else snapOrRel="releases"; fi # echo $snapOrRel
-  SONATYPE=34.198.109.105 # or oss.sonatype.org
-  wget --server-response http://${SONATYPE}/content/repositories/${snapOrRel}/org/eclipse/che/dashboard/che-dashboard-war/${includeDashboardVersion}/maven-metadata.xml -O /tmp/mm.xml
-  cheDashboardVersion=$(grep value /tmp/mm.xml | tail -1 | sed -e "s#.*<value>\(.\+\)</value>#\1#" && rm -f /tmp/mm.xml)
+  if [[ ${includeDashboardVersion} == *"-SNAPSHOT" ]]; then 
+    wget --server-response http://oss.sonatype.org/content/repositories/snapshots/org/eclipse/che/dashboard/che-dashboard-war/${includeDashboardVersion}/maven-metadata.xml -O /tmp/mm.xml
+    cheDashboardVersion=$(grep value /tmp/mm.xml | tail -1 | sed -e "s#.*<value>\(.\+\)</value>#\1#" && rm -f /tmp/mm.xml)
+  fi
   if [[ ! ${cheDashboardVersion} ]]; then cheDashboardVersion=${includeDashboardVersion}; fi # fallback to 6.13.0-SNAPSHOT if not resolved
   MVNFLAGS="${MVNFLAGS} -Dche.dashboard.version=${cheDashboardVersion}"
 fi
