@@ -27,6 +27,7 @@ version=6.14.0
 suffix="" # normally we compute this from version of org/eclipse/che/depmgt/maven-depmgt-pom but can override if needed
 upstreamPom=org/eclipse/che/depmgt/maven-depmgt-pom # usually use depmgt/maven-depmgt-pom but can also align to che-parent for codeready-workspaces build
 INDY=""
+doSedReplacements=1
 
 # read commandline args
 while [[ "$#" -gt 0 ]]; do
@@ -38,6 +39,7 @@ while [[ "$#" -gt 0 ]]; do
     '-PROFILES') PROFILES="$2"; shift 1;; # override default profiles
     '-MVNFLAGS') MVNFLAGS="$2"; shift 1;; # add more mvn flags
     '-INDY') INDY="$2"; shift 1;; # override for default INDY URL
+    '-ns') doSedReplacements=0; shift 0;; # don't do sed replacements (testing NCL-4195)
     *) OTHER="${OTHER} $1"; shift 0;; 
   esac
   shift 1
@@ -78,7 +80,7 @@ fi
 # persistent: 6.12.0.redhat-00001-ec28abe6
 # pmeVersionSHA=$(git describe --tags)
 # pmeSuffix=${pmeVersion#${version}.}; echo $suffix
-if [[ ${suffix} ]]; then
+if [[ ${suffix} ]] && [[ ${doSedReplacements} -gt 0 ]]; then
   for d in $(find . -name pom.xml); do sed -i "s#\(version>\)${version}.*\(</version>\)#\1${version}.${suffix}\2#g" $d; done
   for d in $(find . -name pom.xml); do sed -i "s#\(<che.\+version>\)${version}.*\(</che.\+version>\)#\1${version}.${suffix}\2#g" $d; done
   for d in $(find . -name pom.xml); do sed -i "s#\(<version>${version}\)-SNAPSHOT#\1.${suffix}#g" $d; done # may not be needed 
