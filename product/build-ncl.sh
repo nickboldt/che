@@ -89,7 +89,10 @@ if [[ ${suffix} ]] && [[ ${doSedReplacements} -gt 0 ]]; then
   # not needed - the sed replacements are faster and just as effective
   #mvn versions:set -DnewVersion=${version}.${suffix}
   #mvn versions:update-parent "-DparentVersion=${version}.${suffix}" -DallowSnapshots=false
-  for d in $(find . -maxdepth 1 -name pom.xml); do sed -i "s#\(<.\+\.version>.\+\)-SNAPSHOT#\1.${suffix}#g" $d; done # may not be needed 
+  for d in $(find . -maxdepth 1 -name pom.xml); do sed -i "s#\(<.\+\.version>.\+\)-SNAPSHOT#\1.${suffix}#g" $d; done # may not be needed
+else
+  for d in $(find . -name pom.xml -mindepth 2 | grep -v "src/test/"); do echo "=== $d ==="; grep -i "version>${version}" $d; done
+  for d in $(find . -name pom.xml -maxdepth 1 | grep -v "src/test/"); do echo "=== $d ==="; grep -i "version>${version}" $d; done
 fi
 
 ##########################################################################################
