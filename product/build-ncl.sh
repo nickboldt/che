@@ -28,6 +28,7 @@ suffix="" # normally we compute this from version of org/eclipse/che/depmgt/mave
 upstreamPom=org/eclipse/che/depmgt/maven-depmgt-pom # usually use depmgt/maven-depmgt-pom but can also align to che-parent for codeready-workspaces build
 INDY=""
 doSedReplacements=1
+doDashboardVersionLookup=1
 
 # read commandline args
 while [[ "$#" -gt 0 ]]; do
@@ -40,6 +41,7 @@ while [[ "$#" -gt 0 ]]; do
     '-MVNFLAGS') MVNFLAGS="$2"; shift 1;; # add more mvn flags
     '-INDY') INDY="$2"; shift 1;; # override for default INDY URL
     '-ns') doSedReplacements=0; shift 0;; # don't do sed replacements (testing NCL-4195)
+    '-ndbvl') doDashboardVersionLookup=0; shift 0;; # don't check for a version of the dashboard, just use what's given (testing NCL-4195)s
     *) OTHER="${OTHER} $1"; shift 0;; 
   esac
   shift 1
@@ -170,7 +172,7 @@ if [[ $includeDashboardFromSource ]]; then
 fi
 
 if [[ $includeDashboardVersion ]]; then
-  if [[ ${includeDashboardVersion} == *"-SNAPSHOT" ]]; then 
+  if [[ ${includeDashboardVersion} == *"-SNAPSHOT" ]] && [[ ${doDashboardVersionLookup} -gt 0 ]]; then 
     wget --server-response http://oss.sonatype.org/content/repositories/snapshots/org/eclipse/che/dashboard/che-dashboard-war/${includeDashboardVersion}/maven-metadata.xml -O /tmp/mm.xml
     cheDashboardVersion=$(grep value /tmp/mm.xml | tail -1 | sed -e "s#.*<value>\(.\+\)</value>#\1#" && rm -f /tmp/mm.xml)
   fi
